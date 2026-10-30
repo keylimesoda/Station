@@ -77,6 +77,16 @@ Set `externalDisplays: true` in Station's config when hyprmoncfg owns monitor co
 
 Station then follows Hyprland's active, non-mirrored outputs for workspace mapping, without applying monitor rules on startup or hotplug. Display mutation actions return `external-display-manager`. Its Displays tab opens hyprmoncfg; bars, wallpaper and workspace navigation remain Station features. Cleanup also leaves monitor configuration untouched. Disabling this mode restores Station's display editor; no old display layout is automatically restored.
 
+### Turn off hyprmoncfg workspace planning
+
+When using Station, set **Workspaces → Strategy → Off** in every hyprmoncfg profile. Station owns workspace numbering and placement. Hyprmoncfg's Off setting is stored as `workspaces.enabled: false`; it intentionally retains the old strategy and rules without applying them.
+
+To change an existing profile, open **Profiles**, select the named profile and choose **Edit**, then open **Workspaces** and select **Off**. Choose **Preview & save**, then **Keep** in the confirmation to persist the change. Repeat for every profile you use. Changing the dropdown edits a draft; closing it without completing the save does not persist the change.
+
+An editor initialized from the live desktop can reconstruct Station's workspace rules and show **Manual**, even though saved profiles remain Off. This is a live snapshot, not proof that a saved profile changed. Load a named saved profile before editing it. For each new profile captured from the live desktop, select Off before saving. There is no global workspace-planner lock: the setting is per profile. Workspace numbers reported from the live desktop may belong to Station.
+
+See [hyprmoncfg's documented workspace-manager coexistence workflow](https://hyprmoncfg.dev/virtual-desktops/). To audit saved profiles, check that `workspaces.enabled` is `false` in each `~/.config/hyprmoncfg/profiles/*.json`; generated `~/.config/hypr/hyprmoncfg-monitors.lua` should contain no `hl.workspace_rule` entries. Avoid applying a live Manual draft over a saved profile without turning its workspace planner Off first.
+
 ## Displays
 
 ![Station Displays tab with a visual monitor arrangement and display controls](docs/assets/station-display.png)
