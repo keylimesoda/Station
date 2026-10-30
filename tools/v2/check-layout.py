@@ -85,6 +85,7 @@ Item {
     property string draftSingleTarget: ""
     property string layoutError: ""
     ''' + editable + '''
+    property var config: ({ externalDisplays: false })
     property var displayDraft: []
     property var bars: ({})
     property int previews: 0

@@ -71,6 +71,12 @@ The first display retains its role independently of the order in which outputs
 are discovered. Station keeps physical identity, display roles, and workspace
 numbers separate so changing a layout does not change what a station means.
 
+## Using hyprmoncfg for displays
+
+Set `externalDisplays: true` in Station's config when hyprmoncfg owns monitor configuration. Before enabling this mode, remove Station's marked block from `~/.config/hypr/monitors.lua` with a backup, retain hyprmoncfg's final include, and reload Station. This is an explicit migration: the service refuses to enable the mode through its setting API while its saved monitor block remains.
+
+Station then follows Hyprland's active, non-mirrored outputs for workspace mapping, without applying monitor rules on startup or hotplug. Display mutation actions return `external-display-manager`. Its Displays tab opens hyprmoncfg; bars, wallpaper and workspace navigation remain Station features. Cleanup also leaves monitor configuration untouched. Disabling this mode restores Station's display editor; no old display layout is automatically restored.
+
 ## Displays
 
 ![Station Displays tab with a visual monitor arrangement and display controls](docs/assets/station-display.png)

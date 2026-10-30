@@ -100,3 +100,37 @@ test('cleanup executable replaces the literal-parenthesis marker block with plai
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+test('external-display cleanup leaves monitor configuration untouched', () => {
+  const root = mkdtempSync(join(tmpdir(), 'station-cleanup-'));
+  try {
+    const state = join(root, 'state');
+    const bin = join(root, 'bin');
+    mkdirSync(state); mkdirSync(bin);
+    const monitors = join(root, 'monitors.lua');
+    writeFileSync(join(state, 'monitors-block.plain.lua'), 'hl.monitor({ output = "A", scale = 1 })\n');
+    writeFileSync(join(state, 'state.json'), JSON.stringify({
+      stockLease: { wasEnabled: true }, displayLease: { wasEnabled: true }, appliedBinds: ['x'],
+    }));
+    writeFileSync(monitors, 'before\n-- >>> station (managed; edited by the Station panel) >>>\nlocal up = {}\nhl.monitor({ output = "A", disabled = true })\n-- <<< station <<<\nafter\n');
+    const commands = {
+      'omarchy-shell': '#!/bin/sh\n[ "$2" = ping ] && exit 0\nprintf "[]\\n"\n',
+      omarchy: '#!/bin/sh\nexit 0\n',
+      hyprctl: '#!/bin/sh\nexit 0\n',
+    };
+    for (const [name, body] of Object.entries(commands)) {
+      const path = join(bin, name); writeFileSync(path, body); chmodSync(path, 0o755);
+    }
+    const result = spawnSync('sh', ['-c', R.cleanup, 'sh', state, monitors,
+      'left', '1', '0', 'right', '5', '0', '1'],
+      { encoding: 'utf8', env: { ...process.env, PATH: `${bin}:${process.env.PATH}` } });
+    assert.equal(result.status, 0, result.stderr);
+    const cleaned = readFileSync(monitors, 'utf8');
+    assert.match(cleaned, /local up/);
+    assert.match(cleaned, /disabled = true/);
+    assert.deepEqual(JSON.parse(readFileSync(join(state, 'state.json'), 'utf8')),
+      { stockLease: null, displayLease: null, appliedBinds: [] });
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});

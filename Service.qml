@@ -848,8 +848,8 @@ Item {
   }
 
   function syncDisplayDraft() {
-    var enabled = Model.enabledNames(monitors, config.enabled)
-    var saved = MonitorsLua.managedGeometry(monitorsSource)
+    var enabled = config.externalDisplays ? monitors.filter(function(m) { return !m.disabled }).map(function(m) { return m.name }) : Model.enabledNames(monitors, config.enabled)
+    var saved = config.externalDisplays ? {} : MonitorsLua.managedGeometry(monitorsSource)
     displayDraft = monitors.filter(function(m) { return root.validConnector(m.name) && lanes[m.name] }).map(function(m) {
       var geometry = saved[m.name]
       if (!geometry || (m.availableModes || []).indexOf(geometry.mode) < 0) geometry = null
@@ -877,6 +877,10 @@ Item {
 
   function targetMapping() {
     var options = state === "previewing" && previewApplied ? previewApplied.options : config
+    if (config.externalDisplays) {
+      var physical = monitors.filter(function(m) { return !m.mirrorOf || m.mirrorOf === "none" })
+      return Grid.mapping(physical, lanes, { mode: "extend", enabled: [] })
+    }
     return Grid.mapping(monitors, lanes, options)
   }
 
@@ -1298,6 +1302,12 @@ Item {
     // A config reload/hotplug during Keep must not reapply the old saved mode.
     if (state === "previewing" || state === "applyingLayout") return
     updateAssignments()
+    if (config.externalDisplays) {
+      reconcile()
+      applyBinds()
+      syncBarBlur()
+      return
+    }
     try {
       var displays = Object.keys(lanes).map(function(name) {
         return { name: name, lane: lanes[name] }
@@ -1312,6 +1322,7 @@ Item {
   }
 
   function setDisplayValue(name, key, value) {
+    if (config.externalDisplays) return "external-display-manager"
     if (!draftEditable) return "busy"
     try { MonitorsLua.connector(name) } catch (error) { return "invalid" }
     if (!displayDraft.some(function(d) { return d.name === name })) return "invalid"
@@ -1327,6 +1338,7 @@ Item {
   }
 
   function setResizedDisplayValue(name, key, value) {
+    if (config.externalDisplays) return "external-display-manager"
     if (!draftEditable || ["mode", "scale", "transform"].indexOf(key) === -1) return "invalid"
     try { MonitorsLua.connector(name) } catch (error) { return "invalid" }
     var before = displayDraft.find(function(display) { return display.name === name })
@@ -1345,11 +1357,13 @@ Item {
   }
 
   function setDisplayTransform(name, value) {
+    if (config.externalDisplays) return "external-display-manager"
     if (!Number.isInteger(value) || value < 0 || value > 7) return "invalid"
     return setResizedDisplayValue(name, "transform", value)
   }
 
   function applyDisplaySetting(name, key, value) {
+    if (config.externalDisplays) return "external-display-manager"
     // Side controls are deliberate, discrete choices and do not need the
     // safety countdown used for topology edits. Persist first and let
     // Hyprland's watched config apply the new value once; previewing it first
@@ -1384,6 +1398,7 @@ Item {
   }
 
   function setDisplayEnabled(name, enabled) {
+    if (config.externalDisplays) return "external-display-manager"
     if (!draftEditable) return "busy"
     if (!enabled && displayDraft.filter(function(d) { return d.enabled && d.name !== name }).length === 0) {
       layoutError = "At least one display must remain enabled."
@@ -1408,6 +1423,7 @@ Item {
 
   function setDisplayPosition(name, x, y) {
     if (!draftEditable || !isFinite(x) || !isFinite(y)) return "invalid"
+    if (config.externalDisplays) return "external-display-manager"
     try { MonitorsLua.connector(name) } catch (error) { return "invalid" }
     if (!displayDraft.some(function(display) { return display.name === name })) return "invalid"
     displayDraft = displayDraft.map(function(display) {
@@ -1417,6 +1433,7 @@ Item {
   }
 
   function setModeValue(mode, target) {
+    if (config.externalDisplays) return "external-display-manager"
     if (!draftEditable) return "busy"
     if (["extend", "mirror", "single"].indexOf(mode) === -1) return "invalid"
     if (mode === "single") {
@@ -1471,6 +1488,7 @@ Item {
 
   function previewLayout() {
     if (!draftEditable) return "busy"
+    if (config.externalDisplays) return "external-display-manager"
     if (workspaceData.pending || migrationPhase) return "busy"
     try {
       if (draftMode === "extend" && Model.layoutOverlaps(displayDraft.filter(function(d) { return d.enabled })).length)
@@ -2100,6 +2118,16 @@ Item {
       }
       return "ok"
     }
+    if (name === "externalDisplays") {
+      if (state !== "idle" || workspaceData.pending || migrationPhase) return "busy"
+      if (value === true && MonitorsLua.markerInfo(monitorsSource).starts.length) return "display-rules-still-present"
+      config.externalDisplays = value === true
+      config = Object.assign({}, config)
+      saveConfig()
+      syncDisplayDraft()
+      reconcile()
+      return "ok"
+    }
     if (name === "panelPosition") {
       if (value !== "left" && value !== "center") return "invalid"
       config.panelPosition = value
@@ -2313,7 +2341,7 @@ Item {
     var restoreDisplay = displayLease.disabledByStation && displayLease.wasEnabled ? "1" : "0"
     Quickshell.execDetached(["sh", "-c", Recovery.cleanup, "sh", stateDir,
       monitorsPath, lease.section, String(lease.index), restore,
-      displayLease.section, String(displayLease.index), restoreDisplay])
+      displayLease.section, String(displayLease.index), restoreDisplay, config.externalDisplays ? "1" : "0"])
   }
 
   FileView {
@@ -2602,7 +2630,7 @@ Item {
     function status(): string { return JSON.stringify({ state: root.state, generation: root.gen,
       station: root.currentStation, lanes: root.lanes, unmanaged: root.unmanaged,
       globalBarPosition: root.globalBarPosition, lastGlobalBarPosition: root.lastGlobalBarPosition,
-      bars: root.config.bars,
+      bars: root.config.bars, externalDisplays: root.config.externalDisplays === true,
       workspaceMap: root.workspaceMap, migrationPending: root.workspaceData.pending !== null,
       migrationPhase: root.migrationPhase, layoutError: root.layoutError,
       lastWindowAction: root.lastWindowAction,

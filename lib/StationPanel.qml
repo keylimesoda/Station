@@ -24,6 +24,8 @@ Ui.Panel {
   property string bridgeSnapshotText: ""
   readonly property var service: directService || (bridgeSnapshot ? bridgeProxy : null)
   property int selectedTab: 0
+  readonly property bool externalDisplays: !!service && service.config.externalDisplays === true
+  property string displayManagerError: ""
   property bool sessionTabRestored: false
   // A cross-axis bar move reconfigures the bar's layer surface. During that
   // Wayland transition QsWindow can briefly stop reporting the anchor screen,
@@ -555,6 +557,22 @@ Ui.Panel {
   }
 
   Process {
+    id: displayManagerLaunch
+    command: ["omarchy-shell", "shell", "summon", "crmne.hyprmoncfg", "{}"]
+    property bool exited: false
+    property bool outputReady: false
+    property int code: -1
+    function finish() {
+      if (!exited || !outputReady) return
+      if (code === 0 && displayManagerOutput.text.trim() === "ok") root.close()
+      else root.displayManagerError = "Could not open display settings. Check that hyprmoncfg is enabled."
+    }
+    onRunningChanged: if (running) { exited = false; outputReady = false; code = -1 }
+    stdout: StdioCollector { id: displayManagerOutput; waitForEnd: true; onStreamFinished: { displayManagerLaunch.outputReady = true; displayManagerLaunch.finish() } }
+    onExited: function(exitCode) { code = exitCode; exited = true; finish() }
+  }
+
+  Process {
     id: brightnessRead
     property string monitorName: ""
     property string captured: ""
@@ -818,6 +836,7 @@ Ui.Panel {
               onChanged: function(value) { if (root.service) root.service.setDirectionValue(value) }
             }
             Station.InlineDropdown {
+              visible: !root.externalDisplays
               prefix: "Mode: "
               value: root.modeValue
               options: root.modeOptions
@@ -830,7 +849,43 @@ Ui.Panel {
         }
 
         Ui.PanelSeparator { width: parent.width; foreground: Color.popups.text }
-        Station.DisplaysTab { visible: root.selectedTab === 0; width: parent.width; panelRoot: root }
+        Station.DisplaysTab { visible: root.selectedTab === 0 && !root.externalDisplays; width: parent.width; panelRoot: root }
+        Column {
+          visible: root.selectedTab === 0 && root.externalDisplays
+          width: parent.width
+          spacing: root.space4
+          Item { width: 1; height: root.space2 }
+          Text {
+            x: root.regionPadH
+            width: parent.width - root.regionPadH * 2
+            text: "Displays and profiles are managed by hyprmoncfg. Station manages workspaces, bars and wallpaper."
+            color: root.textPrimary
+            font.family: Style.font.family
+            font.pixelSize: Style.font.body
+            wrapMode: Text.Wrap
+          }
+          Ui.Button {
+            x: root.regionPadH
+            text: "Open display settings..."
+            focusable: true
+            foreground: Color.popups.text
+            background: Color.popups.background
+            accent: Color.accent
+            enabled: !displayManagerLaunch.running
+            onClicked: { root.displayManagerError = ""; displayManagerLaunch.running = true }
+          }
+          Text {
+            x: root.regionPadH
+            width: parent.width - root.regionPadH * 2
+            visible: text !== ""
+            text: root.displayManagerError
+            color: Color.urgent
+            font.family: Style.font.family
+            font.pixelSize: Style.font.caption
+            wrapMode: Text.Wrap
+          }
+          Item { width: 1; height: root.regionPadV }
+        }
         Station.BarTab { visible: root.selectedTab === 1; width: parent.width; panelRoot: root }
         Station.WallpaperTab { visible: root.selectedTab === 2; width: parent.width; panelRoot: root }
         Station.KeybindingsTab { visible: root.selectedTab === 3; width: parent.width; panelRoot: root }

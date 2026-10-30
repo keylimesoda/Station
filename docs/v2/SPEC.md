@@ -641,3 +641,7 @@ Files:
 - **M2 displays:** panel, canvas (logical coordinates), list, resolution/refresh/scale, role swap, brightness, Mode and Direction dropdowns, preview watchdog, Keep transaction, `monitors.lua` block.
 - **M3 keybindings:** conflict checker, editor, red tab.
 - **M4 polish:** settings tab, docs, marketplace listing and review notes.
+
+## External display manager revision (2026-10-30)
+
+With `externalDisplays: true`, hyprmoncfg owns mode, geometry, enablement, mirroring and color settings. Station rejects display editing through UI/service/IPC, skips monitor runtime commands at startup and hotplug, ignores stale saved geometry when showing displays, and derives workspace mapping from active non-mirrored compositor outputs. Station retains workspace rules/bindings, bars and wallpaper. Its Displays tab hands off to hyprmoncfg with an argv-based shell summon; a failed handoff leaves Station open with an error. Removal cleanup must not rewrite monitor rules in this mode. Activation requires backed-up removal of Station's old managed block and retention of hyprmoncfg's final generated include.
