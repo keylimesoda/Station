@@ -94,31 +94,13 @@ refresh changes save directly through the checked configuration transaction.
 > reported as unmanaged. Three- and four-monitor hardware transitions remain
 > unverified on the current two-monitor test setup.
 
-## Bars
+## Status bar
 
-![Current Station Bar tab showing independent monitor edges, content size, height, width, background, and style](docs/assets/tours/bars.gif)
-
-*Rendered from the current Bar tab with isolated preview data; no desktop settings were changed for this animation.*
-
-**A different bar for each display, with Omarchy’s controls still available.**
-Select a monitor in the **Bar** tab and adjust:
-
-| Control | What it does |
-| --- | --- |
-| **Presence and position** | Show or hide the bar on a display; choose top, bottom, left, or right with the monitor-card arrows. At least one active display keeps a bar. |
-| **Content size** | Enlarge icons and labels together. The live limit reserves padding and prevents the widget groups from overlapping. |
-| **Height** | Change bar thickness, up to 5% of the monitor mode’s shorter dimension, subject to Omarchy’s readable minimum. |
-| **Width** | Choose how much of the edge the bar occupies. Station keeps enough room for the widgets. |
-| **Background** | Choose Solid color, Transparent, or Blur. |
-| **Style** | Keep Omarchy’s default bar or use separate Pill groups. The tray pill expands as its drawer opens. |
-
-Drag a bar’s free area toward a screen edge to move **only that monitor’s bar**.
-Omarchy’s **Bar → Position** menu from `SUPER + Space` changes the bar on the
-**focused monitor**. Station’s monitor-card arrows also control one monitor at
-a time; the other displays keep their positions.
-
-The bar keeps Omarchy’s widgets, shared widget layout, and theme colors.
-Station’s logo renders as a vector so it stays sharp as content size changes.
+Station runs as a widget in your existing Omarchy status bar. Enabling it adds
+its logo and station indicator without selecting a replacement bar or changing
+your other widgets. Use Omarchy's Bar settings to customize your status bar.
+The per-monitor bar controls from Station 2.2 require its replacement bar and
+are unavailable in this widget installation.
 
 ## Wallpapers
 

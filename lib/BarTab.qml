@@ -8,6 +8,8 @@ Column {
   id: root
   required property var panelRoot
   readonly property var service: panelRoot.service
+  readonly property bool controlsAvailable: service && service.manifest
+    && Array.isArray(service.manifest.kinds) && service.manifest.kinds.indexOf("bar") !== -1
   readonly property var selectedDisplay: panelRoot.selectedDisplay
   readonly property var selectedBar: selectedDisplay && service
     ? service.monitorBar(selectedDisplay.name)
@@ -38,7 +40,20 @@ Column {
     font.pixelSize: Style.font.caption
   }
 
+  Text {
+    visible: !root.controlsAvailable
+    width: parent.width
+    padding: root.pad
+    text: "Your status bar is managed by Omarchy. Use Omarchy’s Bar settings to customize it. Station’s display, workspace, and wallpaper controls remain available."
+    wrapMode: Text.WordWrap
+    color: root.panelRoot.textPrimary
+    font.family: Style.font.family
+    font.pixelSize: Style.font.body
+  }
+
   Row {
+    visible: root.controlsAvailable
+    enabled: root.controlsAvailable
     width: parent.width
     height: Style.space(428)
 

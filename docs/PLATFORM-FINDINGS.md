@@ -774,3 +774,19 @@ Five-minute smoke checks (each reversible): (1) `hyprctl eval` of one `o.bind` w
   of the source directory encounters ignored video `node_modules` symlinks.
   Live snapshots and probe scripts are under `/tmp/station-20261027-before`
   and `/tmp/station-*-probe.py`, not committed.
+
+## Widget-only status-bar integration (2026-10-30)
+
+[SRC] Omarchy treats a manifest containing `bar` as a replacement bar even when
+it also declares `bar-widget`. Enabling Station 2.2 selected `bar.id=yakumy.station`.
+The widget installation removes the `bar` kind and entry point, retains the
+persistent service, and refuses per-monitor bar publication unless the Station
+bar is already active. Its Bar tab explains the unavailable controls. Saved
+per-monitor preferences are retained. This supersedes the automatic full-bar
+activation behavior documented for 2.2.
+
+Validation of this working-tree change: 204 JavaScript tests and 23 Qt layout
+checks passed; QML components compiled. In an isolated Omabox, enabling Station
+added exactly one widget while preserving the rest of the bar configuration,
+its panel opened from the widget, and disabling it restored the identical
+original bar configuration. Physical monitor transitions were not exercised.

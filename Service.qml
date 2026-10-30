@@ -361,10 +361,11 @@ Item {
   }
 
   function publishMonitorBars(changes, menuPosition) {
+    // Bar controls may update an already selected Station bar, never select it.
+    if (!activeStationBar()) return false
     if (!shell || typeof shell.mutateShellConfig !== "function") return false
     return shell.mutateShellConfig(function(scoped) {
       if (!scoped.bar || typeof scoped.bar !== "object") scoped.bar = {}
-      scoped.bar.id = "yakumy.station"
       if (["top", "bottom", "left", "right"].indexOf(menuPosition) !== -1)
         scoped.bar.position = menuPosition
       if (!scoped.bar.monitors || typeof scoped.bar.monitors !== "object") scoped.bar.monitors = {}
@@ -491,8 +492,7 @@ Item {
     // snapshot above. Do not feed the same click through shell.json while the
     // panel is open: the host can recreate the full bar and the panel with it.
     // Keep shell.json as a durable mirror, but update it after an ordinary
-    // close. The first edit still publishes immediately because it must select
-    // Station's full-bar entry and retire the old widget row atomically.
+    // close. Publishing never selects a different bar.
     if (activeStationBar() && panelWanted) {
       if (!shell || typeof shell.mutateShellConfig !== "function") return "unsupported"
       deferMonitorBarPublish(name, next)
@@ -649,7 +649,7 @@ Item {
   }
 
   function syncBarBlur() {
-    if (!started || !configLoaded) return
+    if (!started || !configLoaded || !activeStationBar()) return
     if (barBlurProbe.running) { barBlurSyncQueued = true; return }
     barBlurProbe.running = true
   }

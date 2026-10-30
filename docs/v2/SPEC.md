@@ -63,6 +63,15 @@ A missing lane never makes the GUI say "Primary + Third". Changing Role in the G
 | 18  | [V] Lua dispatch syntax (from v1): `hl.dispatch(hl.dsp.window.move({ window="address:0x…", workspace=N, follow=false }))`, `hl.dispatch(hl.dsp.workspace.move({ workspace=N, monitor="NAME" }))`.                                                                                                                       |                                                                                          |
 | 19  | [V] Omarchy 4 binds `SUPER+1..0` as `SUPER + code:10…19`.                                                                                                                                                                                                                                                               | Unbind with the same form.                                                               |
 
+### Widget installation revision (2026-10-30)
+
+The primary plugin declares only `bar-widget` and `service`. Enabling Station
+adds its widget to the current status bar. It must never select its full-bar
+implementation implicitly, including from the Bar tab or service publication.
+Per-monitor bar customization requires a replacement bar; those controls are
+unavailable in the widget installation. Existing bar selection and widget layout
+remain owned by Omarchy. This supersedes the 2.2 full-bar activation behavior.
+
 ## 4. Stack and layout
 
 QML for UI and services; plain JS modules for logic. Tests with `node --test` (lib/ has no QML dependencies).

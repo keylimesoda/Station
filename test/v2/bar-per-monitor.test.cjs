@@ -14,11 +14,11 @@ function qmlFunction(source, name, context = {}) {
   return runInNewContext('(' + source.slice(start, end) + ')', context);
 }
 
-test('2.2 manifest exposes the full bar alongside the widget and service', () => {
+test('Station enables as a widget and service without selecting a replacement bar', () => {
   const manifest = JSON.parse(read('manifest.json'));
   assert.equal(manifest.version, '2.2.0');
-  assert.deepEqual(manifest.kinds, ['bar', 'bar-widget', 'service']);
-  assert.equal(manifest.entryPoints.bar, 'Bar.qml');
+  assert.deepEqual(manifest.kinds, ['bar-widget', 'service']);
+  assert.equal(manifest.entryPoints.bar, undefined);
 });
 
 test('bar preferences migrate and reject unknown positions', () => {
@@ -126,6 +126,7 @@ test('closing the panel flushes all deferred monitor rows in one host write', ()
       mutateShellConfig(mutator) { writes++; mutator(shellConfig); return true; },
     },
   };
+  context.activeStationBar = () => true;
   context.publishMonitorBars = qmlFunction(service, 'publishMonitorBars', context);
   const flush = qmlFunction(service, 'flushPendingMonitorBars', context);
 
@@ -146,31 +147,23 @@ test('full-bar entry reads live service bars before the shell.json mirror', () =
   assert.ok(fullBar.indexOf('var live = stationBars') < fullBar.indexOf('var rows = barConfig'));
 });
 
-test('first bar edit activates Station and retires its persisted widget atomically', () => {
-  const shellConfig = { bar: {
-    id: 'omarchy.bar',
-    layout: {
+test('bar controls cannot replace a stock or custom status bar or remove its widgets', () => {
+  for (const id of [undefined, 'omarchy.bar', 'ric.bar']) {
+    const shellConfig = { bar: { id, layout: {
       left: [{ id: 'omarchy.menu' }, { id: 'yakumy.station' }],
-      center: [{ id: 'omarchy.clock' }],
-      right: [{ id: 'yakumy.station' }, { id: 'omarchy.tray' }],
-    },
-  } };
-  const context = {
-    shell: {
-      mutateShellConfig(mutator) { mutator(shellConfig); return true; },
-    },
-  };
-  context.publishMonitorBars = qmlFunction(service, 'publishMonitorBars', context);
-  const publish = qmlFunction(service, 'publishMonitorBar', context);
-  assert.equal(publish('DP-1', { enabled: true, position: 'right', width: 100 }), true);
-  assert.equal(shellConfig.bar.id, 'yakumy.station');
-  assert.deepEqual(JSON.parse(JSON.stringify(shellConfig.bar.monitors['DP-1'])),
-    { enabled: true, position: 'right', width: 100 });
-  assert.deepEqual(JSON.parse(JSON.stringify(shellConfig.bar.layout)), {
-    left: [{ id: 'omarchy.menu' }],
-    center: [{ id: 'omarchy.clock' }],
-    right: [{ id: 'omarchy.tray' }],
-  });
+      center: [{ id: 'omarchy.clock' }], right: [{ id: 'omarchy.tray' }],
+    } } };
+    const before = JSON.stringify(shellConfig);
+    const context = { shell: {
+      barConfig: shellConfig.bar,
+      mutateShellConfig() { throw new Error('must not mutate the host bar'); },
+    } };
+    context.activeStationBar = qmlFunction(service, 'activeStationBar', context);
+    context.publishMonitorBars = qmlFunction(service, 'publishMonitorBars', context);
+    const publish = qmlFunction(service, 'publishMonitorBar', context);
+    assert.equal(publish('DP-1', { enabled: true, position: 'right', width: 100 }), false);
+    assert.equal(JSON.stringify(shellConfig), before);
+  }
 });
 
 test('upgrading an active Station bar retires the legacy widget row on service load', () => {
