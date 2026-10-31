@@ -645,3 +645,7 @@ Files:
 ## External display manager revision (2026-10-30)
 
 With `externalDisplays: true`, hyprmoncfg owns mode, geometry, enablement, mirroring and color settings. Station rejects display editing through UI/service/IPC, skips monitor runtime commands at startup and hotplug, ignores stale saved geometry when showing displays, and derives workspace mapping from active non-mirrored compositor outputs. Station retains workspace rules/bindings, bars and wallpaper. Its Displays tab hands off to hyprmoncfg with an argv-based shell summon; a failed handoff leaves Station open with an error. Removal cleanup must not rewrite monitor rules in this mode. Activation requires backed-up removal of Station's old managed block and retention of hyprmoncfg's final generated include.
+
+## Native bar controls revision (2026-10-30)
+
+In widget mode on `omarchy.bar`, Station exposes global position and transparency through the supported `omarchy bar position` and `transparent` commands. The persistent service publishes detached native bar config through the existing bridge so both host paths show current values. The UI rejects arbitrary command keys/values and replacement bar edits; failures remain visible. No command selects Station’s full bar or alters widget placement. Per-monitor size and style remain full-bar-only. Native interaction was verified in an omabox test desktop: position Top→Left, transparency Solid→Transparent, configuration readback, and preservation of widget layout and bar ID.

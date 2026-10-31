@@ -31,6 +31,10 @@ Item {
     return ["top", "bottom", "left", "right"].indexOf(value) !== -1 ? value : ""
   }
   onGlobalBarPositionChanged: Qt.callLater(syncGlobalBarPosition)
+  readonly property var nativeBarConfig: {
+    var config = shell && shell.barConfig ? (shell.barConfig.bar || shell.barConfig) : ({})
+    return { id: String(config.id || "omarchy.bar"), position: String(config.position || "top"), transparent: config.transparent === true }
+  }
   property var manifest: null
   property var barBridge: null
   readonly property string pluginDir: manifest && typeof manifest.__sourceDir === "string"
@@ -183,6 +187,7 @@ Item {
   function barSnapshot() {
     return JSON.parse(JSON.stringify({
       currentStation: currentStation,
+      nativeBarConfig: nativeBarConfig,
       displayDraft: displayDraft,
       bindStatuses: bindStatuses,
       config: config,

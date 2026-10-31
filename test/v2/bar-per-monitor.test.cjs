@@ -579,3 +579,23 @@ test('drag completion targets its source monitor even when focus is elsewhere', 
     ['setMonitorBarPosition', ['eDP-1', 'right']]]);
   assert.match(read('Bar.qml'), /root.requestMonitorPosition\(monitorBar, position\)/);
 });
+
+test('native bar controls use supported commands and reject bar replacement or arbitrary values', () => {
+  const source = read('lib/BarTab.qml');
+  const process = { running: false, command: [] };
+  const c = { nativeAvailable: true, nativeChange: process, nativeError: '' };
+  const change = qmlFunction(source, 'changeNativeBar', c);
+  assert.equal(change('position', 'left'), true);
+  assert.equal(JSON.stringify(process.command), JSON.stringify(['omarchy', 'bar', 'position', 'left']));
+  process.running = false;
+  assert.equal(change('transparent', 'true'), true);
+  assert.equal(JSON.stringify(process.command), JSON.stringify(['omarchy', 'bar', 'transparent', 'true']));
+  process.running = false;
+  for (const [key, value] of [['use', 'yakumy.station'], ['position', 'bad'], ['transparent', 'toggle']])
+    assert.equal(change(key, value), false);
+  c.nativeAvailable = false;
+  assert.equal(change('position', 'top'), false);
+  c.nativeAvailable = true;
+  process.running = true;
+  assert.equal(change('position', 'top'), false);
+});

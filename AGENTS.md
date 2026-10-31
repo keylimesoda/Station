@@ -53,7 +53,7 @@ bug, then reconcile the affected documents in the same change.
   Station preserves the selected status bar. Retained full-bar implementation
   files are not entry points. `publishMonitorBars` must refuse writes unless
   Station's full bar was explicitly selected; never activate it as a side effect.
-  The Bar tab explains that per-monitor bar controls are unavailable in widget mode.
+  In widget mode the Bar tab exposes Omarchy’s supported global position and transparency through argv-based `omarchy bar` commands. Per-monitor controls remain exclusive to Station’s full bar; never switch bar IDs or rewrite the widget layout for these global edits.
 - `lib/Grid.js` owns compact workspace numbering and migration plans;
   `Model.js` owns display identity, lanes, geometry, and mode choices;
   `Hypr.js`, `Binds.js`, and `MonitorsLua.js` validate and generate runtime

@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell.Io
 import qs.Ui as Ui
 import qs.Commons
 import qs.Commons as Commons
@@ -40,15 +41,86 @@ Column {
     font.pixelSize: Style.font.caption
   }
 
-  Text {
+  readonly property var nativeConfig: service && service.nativeBarConfig ? service.nativeBarConfig : ({})
+  readonly property bool nativeAvailable: nativeConfig.id === "omarchy.bar"
+  property string nativeError: ""
+
+  function changeNativeBar(key, value) {
+    if (!nativeAvailable || nativeChange.running) return false
+    if (key === "position" && ["top", "bottom", "left", "right"].indexOf(value) === -1) return false
+    if (key === "transparent" && value !== "true" && value !== "false") return false
+    if (key !== "position" && key !== "transparent") return false
+    nativeError = ""
+    nativeChange.command = ["omarchy", "bar", key, value]
+    nativeChange.running = true
+    return true
+  }
+
+  Process {
+    id: nativeChange
+    onExited: function(exitCode) {
+      if (exitCode !== 0) root.nativeError = "Could not update Omarchy's bar settings."
+    }
+  }
+
+  Column {
     visible: !root.controlsAvailable
     width: parent.width
-    padding: root.pad
-    text: "Your status bar is managed by Omarchy. Use Omarchy’s Bar settings to customize it. Station’s display, workspace, and wallpaper controls remain available."
-    wrapMode: Text.WordWrap
-    color: root.panelRoot.textPrimary
-    font.family: Style.font.family
-    font.pixelSize: Style.font.body
+    spacing: root.panelRoot.space4
+    Item { width: 1; height: root.panelRoot.space2 }
+    Text {
+      x: root.pad
+      width: parent.width - root.pad * 2
+      text: root.nativeAvailable
+        ? "Omarchy bar · Settings apply to all displays."
+        : "The active replacement bar manages its own appearance."
+      wrapMode: Text.WordWrap
+      color: root.panelRoot.textPrimary
+      font.family: Style.font.family
+      font.pixelSize: Style.font.body
+    }
+    Row {
+      visible: root.nativeAvailable
+      x: root.pad
+      spacing: root.panelRoot.space4
+      Ui.Dropdown {
+        width: Style.space(180)
+        showLabel: false
+        value: String(root.nativeConfig.position || "top")
+        options: [{value:"top",label:"Top"}, {value:"bottom",label:"Bottom"},
+          {value:"left",label:"Left"}, {value:"right",label:"Right"}]
+        foreground: root.panelRoot.textPrimary
+        enabled: !nativeChange.running
+        onChanged: function(value) { root.changeNativeBar("position", value) }
+      }
+      Ui.Dropdown {
+        width: Style.space(180)
+        showLabel: false
+        value: root.nativeConfig.transparent === true ? "true" : "false"
+        options: [{value:"false",label:"Solid"}, {value:"true",label:"Transparent"}]
+        foreground: root.panelRoot.textPrimary
+        enabled: !nativeChange.running
+        onChanged: function(value) { root.changeNativeBar("transparent", value) }
+      }
+    }
+    Text {
+      x: root.pad
+      width: parent.width - root.pad * 2
+      text: "Per-display bar size, width and style require Station's replacement bar. Your current widget layout is preserved."
+      wrapMode: Text.WordWrap
+      color: root.panelRoot.textDim
+      font.family: Style.font.family
+      font.pixelSize: Style.font.caption
+    }
+    Text {
+      x: root.pad
+      visible: text !== ""
+      text: root.nativeError
+      color: Color.urgent
+      font.family: Style.font.family
+      font.pixelSize: Style.font.caption
+    }
+    Item { width: 1; height: root.pad }
   }
 
   Row {

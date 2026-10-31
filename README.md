@@ -115,8 +115,7 @@ refresh changes save directly through the checked configuration transaction.
 Station runs as a widget in your existing Omarchy status bar. Enabling it adds
 its logo and station indicator without selecting a replacement bar or changing
 your other widgets. Use Omarchy's Bar settings to customize your status bar.
-The per-monitor bar controls from Station 2.2 require its replacement bar and
-are unavailable in this widget installation.
+In widget mode, the Bar tab controls Omarchy’s global bar position and transparency using the supported `omarchy bar` commands. These settings apply to every display and preserve the current widget layout and selected bar. Per-monitor size, width, and style require Station’s replacement bar and remain unavailable in widget mode.
 
 ## Wallpapers
 
